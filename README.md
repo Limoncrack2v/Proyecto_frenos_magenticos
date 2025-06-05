@@ -2,8 +2,6 @@
 
 ## Description
 
-Matlab functions to represent the magnetic field of a `n` amount of turns in a solenoid, and
-calculate the trajectory of a magnet passing through the solenoid with a mass of `m`.
 
 ## Usage
 
@@ -22,8 +20,6 @@ git clone https://github.com/Limoncrack2v/Proyecto_frenos_magenticos
 ```matlab
 turns(nl, N, R, sz, I)
 ```
-
-### Parameters
 
 | Parameter | Type     | Description |
 |-----------|----------|-------------|

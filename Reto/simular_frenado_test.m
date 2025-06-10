@@ -1,0 +1,66 @@
+function [t, zm] = simular_frenado_test(Bz_total, malla_z)
+
+
+    % Parámetros físicos
+    m      = 0.009;     % masa del imán [kg]
+    mag    = 800;     % momento magnético [A·m^2] (negativo→dipolo hacia abajo)
+    gamma  = 0.08;      % coeficiente de fricción magnética [N·s/m]
+    dt     = 0.05;      % paso de tiempo [s]
+    tmax   = 8;         % tiempo máximo [s]
+
+    % Construir vector de tiempos
+    t = 0 : dt : tmax;
+    Npasos = length(t);
+
+    % Preasignación
+    zm = zeros(1, Npasos);  % posición
+    vz = zeros(1, Npasos);  % velocidad
+    az = zeros(1, Npasos);  % aceleración (para almacenar valores)
+
+    % Condiciones iniciales
+    zm(1) = 5.5;    % altura inicial [m]
+    vz(1) = 0.7;  % velocidad inicial [m/s]
+
+    % Extraer Bz en el centro de xy (índice medio en y)
+    [Nx, Ny, Nz] = size(Bz_total);
+    idx_xc = ceil(Nx / 2);
+    idx_yc = ceil(Ny / 2);
+    Bz_vec = squeeze(Bz_total(idx_xc, idx_yc, :));  % vector (1×Nz)
+
+    % Handle anónimo a la función de aceleración
+    a_func = @(z_val, v_val) a_total(z_val, v_val, Bz_vec, malla_z, mag, gamma, m);
+
+    % --------------- Bucle de integración RK4 ---------------
+    for cc = 1 : Npasos-1
+        az(cc) = a_func(zm(cc), vz(cc));  % opcional: almacenar aceleración
+
+        [z_prox, v_prox] = rk4_step(zm(cc), vz(cc), dt, a_func);
+
+        zm(cc+1) = z_prox;
+        vz(cc+1) = v_prox;
+
+        % Detener si el imán llega al “suelo” (z ≤ mínimo de la malla)
+        if zm(cc+1) <= min(malla_z)
+            zm(cc+1:end) = zm(cc+1);
+            vz(cc+1:end) = 0;  % frenamos la velocidad
+            break;
+        end
+    end
+    az(end) = a_func(zm(end), vz(end));  % última aceleración
+
+    % Caída libre para comparación
+    zm_freefall = 5 - 0.5 * 9.81 * t.^2;
+    zm_freefall(zm_freefall < min(malla_z)) = min(malla_z);
+
+    % --------------- Gráfica final ---------------
+    figure;
+    hold on;
+    plot(t, zm, 'r-',  'LineWidth', 2);
+    plot(t, zm_freefall, 'b--', 'LineWidth', 1.6);
+    xlabel('Tiempo [s]');
+    ylabel('Posición z [m]');
+    legend('Con solenoide (RK4)', 'Caída libre', 'Location', 'northeast');
+    title('Comparación: caída de dipolo con freno magnético vs. caída libre');
+    grid on;
+    hold off;
+end

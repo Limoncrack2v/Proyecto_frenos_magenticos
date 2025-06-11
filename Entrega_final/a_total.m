@@ -1,6 +1,4 @@
 function a = a_total(z_val, v_val, Bz_vec, z_axis, mag, gamma, m)
-
-
     % 1) Derivada numérica central para dBz/dz
     delta = 0.005;  % intervalo pequeño
     Bz_forward  = interp1(z_axis, Bz_vec, z_val + delta, 'linear', 'extrap');

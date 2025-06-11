@@ -1,8 +1,5 @@
 ## Simulación del Campo Magnético de un Solenoide en MATLAB
 
-## Description
-
-
 ## Usage
 
 Clone the repo and run the `main.m` file to see all the functios running, show the 3 graphs.
@@ -11,169 +8,256 @@ Clone the repo and run the `main.m` file to see all the functios running, show t
 git clone https://github.com/Limoncrack2v/Proyecto_frenos_magenticos
 ```
 
-## Generate Turns
-
-### Description
+## a_total.m
 
 ### Syntax
 
 ```matlab
-turns(nl, N, R, sz, I)
+a_total(z_val, v_val, Bz_vec, z_axis, mag, gamma, m)
 ```
 
-| Parameter | Type     | Description |
-|-----------|----------|-------------|
-| `nl`      | Integer  | Number of layers (loops) stacked along the Z-axis. Each layer is a circular current loop. |
-| `N`       | Integer  | Number of segments used to discretize each circular loop (affects visual smoothness). |
-| `R`       | Float    | Radius of each circular loop. |
-| `sz`      | Float    | *Unused parameter.* Reserved for future use or legacy compatibility. |
-| `I`       | Float    | Current flowing through each loop (used in magnetic constant calculation, though not visualized). |
+| Parameter  | Type     | Description                                                                 |
+|------------|----------|-----------------------------------------------------------------------------|
+| `z_val`    | Float    | Current position along the Z-axis (meters).                                 |
+| `v_val`    | Float    | Current velocity along the Z-axis (meters/second).                          |
+| `Bz_vec`   | Vector   | Magnetic field values \( B_z \) sampled along the Z-axis.                   |
+| `z_axis`   | Vector   | Corresponding Z positions for each value in `Bz_vec`.                       |
+| `mag`      | Float    | Magnetic moment of the object (Ampere·meter²).                              |
+| `gamma`    | Float    | Magnetic damping coefficient (kg/s), representing frictional force.         |
+| `m`        | Float    | Mass of the object (kilograms).                                             |
 
 ### Output
 
-This function does not return any output. It generates a 3D plot showing the vector directions of current flow in each circular loop arranged along the Z-axis.
-
-
-### Internal Constants
-
-- `mo = 4π × 10⁻⁷`: Magnetic permeability of free space (H/m).
-- `rw = 0.2`: Wire radius (not used in calculations, could be for future enhancements).
-
-### Visualization
-
-- `quiver3` is used to plot arrows representing the current direction on each loop.
-- Each loop is offset in the Z direction to form a helix-like stack.
-- Red arrows (`'r'`) are used to indicate the vector field.
-- Axes are labeled and grid is enabled for clarity.
+a (Float): The total acceleration experienced by the object at position z_val.
 
 ### Example
 
 ```matlab
-turns(5, 100, 1, 0.1, 10)
+a = a_total(0.1, 0.2, linspace(0, 1, 100), linspace(-0.5, 0.5, 100), 0.01, 0.05, 0.02);
 ```
-This will draw 5 circular loops of radius 1, each discretized into 100 segments, spaced evenly along the Z-axis, simulating a solenoid with current `I = 10`.
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
-## Magnetic Field
-
-### Description
+## calcular_campo.m 
 
 ### Syntax 
 
 ```matlab
-field(N, nl, x, y, sz, z, dx, dy, dz, km, mo, rw)
+calcular_campo(N, nl, x, y, z, dx, dy, dz, malla_x, malla_y, malla_z, km, sz)
 ```
 
 ### Parameters
 
-| Parameter | Type     | Description |
-|-----------|----------|-------------|
-| `N`       | Integer  | Number of segments in each loop and resolution of the 3D meshgrid. |
-| `nl`      | Integer  | Number of loops (layers) in the solenoid. |
-| `x`, `y`, `z` | Arrays | Position vectors of each segment in a loop. |
-| `sz`      | Float    | Vertical spacing between loops. |
-| `dx`, `dy`, `dz` | Arrays | Differential vector components (segment direction vectors) of the current elements. |
-| `km`      | Float    | Magnetic constant `μ₀I / (4π)` used in the Biot-Savart law. |
-| `mo`      | Float    | Magnetic permeability of free space (typically `4π × 10⁻⁷`). |
-| `rw`      | Float    | Wire radius (not used in current calculations but may be reserved for future use). |
-
+| Parámetro    | Tipo     | Descripción                                                                 |
+|--------------|----------|-----------------------------------------------------------------------------|
+| `N`          | Integer  | Número de segmentos por cada espira circular (afecta la resolución).         |
+| `nl`         | Integer  | Número de espiras apiladas a lo largo del eje Z.                            |
+| `x`, `y`, `z`| Float    | Coordenadas del punto de observación donde se desea calcular el campo.      |
+| `dx`         | Float    | Separación entre segmentos en la dirección X (del mallado).                 |
+| `dy`         | Float    | Separación entre segmentos en la dirección Y (del mallado).                 |
+| `dz`         | Float    | Separación entre espiras en la dirección Z (del apilamiento).              |
+| `malla_x`    | Vector   | Coordenadas X de los puntos del mallado.                                    |
+| `malla_y`    | Vector   | Coordenadas Y de los puntos del mallado.                                    |
+| `malla_z`    | Vector   | Coordenadas Z de los puntos del mallado.                                    |
+| `km`         | Float    | Constante magnética \(\mu_0 \cdot I / (4\pi)\), para el cálculo del campo. |
+| `sz`         | Float    | *Parámetro no usado.* Reservado para compatibilidad o uso futuro.           |
 
 ### Output
 
-This function does not return a value but generates visual output:
-
-- A call to `trayectory(...)` (assumed to visualize a particle trajectory, not defined in this function).
-- A 2D plot showing a heatmap of magnetic field magnitude in the XZ plane and streamlines representing field direction.
-
-### Calculation
-
-- The field is calculated at every point of a 3D grid defined by `malla_x`, `malla_y`, and `malla_z`.
-- The magnetic field contribution from each current segment is calculated using the **Biot–Savart law**:
-  \\[ \vec{dB} = \frac{\mu_0 I}{4\pi} \frac{\vec{dl} \times \vec{r}}{r^3} \\]
-
-### Visualization
-
-- A slice at the center of the Y-plane (`y = 0`) is used to extract the XZ components of the field.
-- The magnetic field magnitude is plotted using a colored heatmap (`pcolor`).
-- `streamslice` is used to draw field lines for visualizing the direction of the field.
-- The colormap is set to `turbo`, providing a vivid appearance.
-
-### Notes
-
-- The function expects that variables like `trayectory`, `mag`, `m`, `zo`, `dt`, `vz`, and `gamma` are defined elsewhere or globally. These are used in the `trayectory(...)` call.
-- The parameter `rw` is not used directly.
-- The visualization is professional and stylized to resemble physical simulation outputs.
+In a typical usage, you might see:
+    - Arrows indicating the magnetic field direction around the solenoid.
+    - Higher density and magnitude of the field inside the solenoid core.
+    - A symmetric pattern of the magnetic field resembling a classic solenoidal field distribution.
 
 ### Example
 
 ```matlab
-% Assuming x, y, z, dx, dy, dz are computed from a circular loop
-field(50, 10, x, y, 0.1, z, dx, dy, dz, km, mo, rw)
+calcular_campo(N, nl, x, y, z, dx, dy, dz, malla_x, malla_y, malla_z, km, sz)
 ```
-
-This will calculate and visualize the magnetic field of a solenoid with 10 loops, using a 50×50×50 spatial resolution.
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
-## Trajectory
-### Description
+## generar_solenoide.m
 
 ### Syntax
 
 ```matlab
-trayectory(Bz, z, mag, m, zo, dt, vz, gamma)
+generar_solenoide(N, R)
 ```
 
 ### Parameters
 
-| Parameter | Type     | Description |
-|-----------|----------|-------------|
-| `Bz`      | Array    | Z-component of the magnetic field along the Z-axis. |
-| `z`       | Array    | Position values corresponding to `Bz`. |
-| `mag`     | Float    | Magnetic moment of the falling object. |
-| `m`       | Float    | Mass of the falling magnetic object. |
-| `zo`      | Float    | Initial position along the Z-axis. |
-| `dt`      | Float    | Time step for simulation. |
-| `vz`      | Float    | Initial velocity of the object along the Z-axis. |
-| `gamma`   | Float    | Friction (drag) coefficient modeling resistive force. |
+| Parámetro | Tipo     | Descripción                                                                 |
+|-----------|----------|-----------------------------------------------------------------------------|
+| `N`       | Integer  | Número de segmentos utilizados para discretizar una espira circular.         |
+| `R`       | Float    | Radio de la espira circular que representa una vuelta del solenoide.         |
 
 
 ### Output
 
-The function does not return values, but produces a figure:
-
-- **Figure 3**: A plot of position vs. time comparing:
-  - The motion of the magnet falling through a magnetic field.
-  - The motion of the same magnet under free fall (without magnetic forces).
-
-
-### Core Mechanics
-
-- Uses the finite difference method to approximate the derivative \( \frac{dB_z}{dz} \) for computing the magnetic force.
-- The magnetic force is calculated using:
-  \\[ F_m = -\mu \frac{dB_z}{dz} \\]
-  where \( \mu \) is the magnetic moment.
-- Includes gravitational force \( F_g = -mg \) and damping force \( F_f = -\gamma v \).
-- Updates position and velocity using basic kinematics.
-
-### Visualization
-
-- Red line: Trajectory of the magnet influenced by the magnetic field.
-- Blue line: Free fall trajectory without magnetic interaction.
-- X-axis: Time (seconds)
-- Y-axis: Vertical position (meters)
-
-### Notes
-
-- Uses interpolation (`interp1`) for estimating the field gradient at the current position.
-- The simulation loop terminates early if the magnet velocity falls below a small threshold (\(10^{-3}\)) to represent near rest.
-- The loop is defined over a hardcoded range (`1:-1:-3`), which may need adjustment depending on the required number of simulation steps.
+This will plot a circle of radius 1 with 100 discrete points representing the wire loop, lying in the plane.
 
 ### Example
 
 ```matlab
-trayectory(Bz, z, 0.01, 0.2, 1.0, 0.01, 0.7, 0.05)
+generar_solenoide(100, 1)
 ```
 
-Simulates the trajectory of a 200 g magnet with magnetic moment 0.01 A·m², starting at height 1.0 m with 0.7 m/s downward velocity and a friction coefficient of 0.05.
+----------------------------------------------------------------------------------------------------------------------------------
+
+## rk4_step.m
+
+### Syntax
+
+```matlab
+[z_next, v_next] = rk4_step(z, v, dt, a_func)
+```
+
+### Parameters
+
+| Parameter | Type     | Description                                                      |
+|-----------|----------|------------------------------------------------------------------|
+| `z`       | Float    | Current position (usually along z-axis) at the current time step.|
+| `v`       | Float    | Current velocity at the current time step.                       |
+| `dt`      | Float    | Time step size for the integration.                             |
+| `a_func`  | Function | Handle to a function that calculates acceleration `a = a_func(z, v)`.|
+
+
+### Example
+```matlab
+[z_next, v_next] = rk4_step(z, v, dt, a_func)
+```
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+## runge_a_total.m
+
+### Syntax
+
+```matlab
+[z_next, v_next] = runge_(z, v, dt, a_func)
+```
+
+### Parameters
+
+### Parámetros de `runge_`
+
+| Parámetro | Tipo       | Descripción                                   |
+|-----------|------------|-----------------------------------------------|
+| `z`       | Float      | Posición actual (escalar).                     |
+| `v`       | Float      | Velocidad actual (escalar).                    |
+| `dt`      | Float      | Paso de tiempo para integración.              |
+| `a_func`  | Function   | Handle a función que calcula aceleración: `a = a_func(z, v)`.|
+
+---
+
+### Parámetros de `a_total`
+
+| Parámetro | Tipo       | Descripción                                              |
+|-----------|------------|----------------------------------------------------------|
+| `z_val`   | Float      | Posición actual (escalar).                               |
+| `v_val`   | Float      | Velocidad actual (escalar).                              |
+| `Bz_vec`  | Vector     | Vector con valores del campo magnético Bz a lo largo de `z_axis`. |
+| `z_axis`  | Vector     | Vector con posiciones donde está definido `Bz_vec`.     |
+| `mag`     | Float      | Momento magnético (constante escalar).                   |
+| `gamma`   | Float      | Coeficiente de fricción magnética.                       |
+| `m`       | Float      | Masa del imán (kg).                                     |
+
+---
+
+### Salidas
+
+| Función  | Salida   | Tipo  | Descripción                          |
+|----------|----------|-------|------------------------------------|
+| `runge_` | `z_next` | Float | Posición actualizada en t + dt.    |
+|          | `v_next` | Float | Velocidad actualizada en t + dt.   |
+| `a_total`| `a`      | Float | Aceleración calculada en (z, v).   |
+
+
+### Example
+
+```matlab
+[z_next, v_next] = runge_(z, v, dt, a_func)
+```
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+## simular_frenado_test.m
+
+### Syntax
+
+```matlab
+[t, zm] = simular_frenado_test(Bz_total, malla_z)
+```
+
+### Parameters
+
+### Parámetros de entrada
+
+| Parámetro  | Tipo      | Descripción                                                                                      |
+|------------|-----------|------------------------------------------------------------------------------------------------|
+| `Bz_total` | Matriz 3D | Campo magnético Bz definido en una malla 3D con dimensiones (Nx × Ny × Nz).                     |
+| `malla_z`  | Vector 1D | Vector con las posiciones en el eje z donde está definido el campo magnético `Bz_total`.       |
+
+---
+
+### Parámetros de salida
+
+| Parámetro | Tipo    | Descripción                                      |
+|-----------|---------|------------------------------------------------|
+| `t`       | Vector  | Vector con los tiempos de simulación [s].      |
+| `zm`      | Vector  | Vector con la posición del imán en el eje z [m].|
+
+---
+
+### Example
+```matlab
+[t, zm] = simular_frenado_test(Bz_total, malla_z)
+```
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+## visualizar_campo.m
+
+### Syntax
+
+```matlab
+visualizar_campo(Bx_total, Bz_total, malla_x, malla_z)
+```
+
+### Parameters
+
+### Example
+
+```matlab
+visualizar_campo(Bx_total, Bz_total, malla_x, malla_z)
+```
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+## visualizar_solenoide.m
+
+### Syntax
+
+```matlab
+visualizar_solenoide(x, y, z, dx, dy, dz, nl, sz)
+```
+
+### Parameters
+
+| Parámetro    | Tipo       | Descripción                                                                                   |
+|--------------|------------|-----------------------------------------------------------------------------------------------|
+| `Bx_total`   | Matriz 3D | Componente x del campo magnético en la malla 3D (dimensiones: Nx × Ny × Nz).                 |
+| `Bz_total`   | Matriz 3D | Componente z del campo magnético en la malla 3D (dimensiones: Nx × Ny × Nz).                 |
+| `malla_x`    | Vector 1D | Vector con las posiciones en el eje x donde está definido el campo magnético.                |
+| `malla_z`    | Vector 1D | Vector con las posiciones en el eje z donde está definido el campo magnético.                |
+
+---
+
+### Example
+
+```matlab
+visualizar_campo(Bx_total, Bz_total, malla_x, malla_z)
+```
+
